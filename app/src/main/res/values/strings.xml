@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">ParkirIn</string>
+    <string name="masukkan_jam">Masukkan jam</string>
+    <string name="hitung">Hitung</string>
+    <string name="teks_hasil">Rp %1$.0f</string>
+    <string name="parkir_intro">Pilih Kendaraan</string>
+    <string name="info_app">Info</string>
+    <string name="back">Kembali</string>
+    <string name="describe">ParkirIn adalah aplikasi untuk menghitung biaya parkir kendaraan. Aplikasi ini dibuat untuk memenuhi Assessment mata kuliah Mobile Programming I.\n\nDibuat oleh: Sakha Wibisono\n6706213102</string>
+    <string name="input_invalid">Wajib Di isi!</string>
+    <string name="motor">Biaya parkir Motor</string>
+    <string name="mobil">Biaya parkir Mobil</string>
+    <string name="hati2">Hati-hati dalam berkendara.</string>
+    <string name="intent_mail">share mail</string>
+    <string name="kritik_saran">Kritik/Saran</string>
+</resources>
