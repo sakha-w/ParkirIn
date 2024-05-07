@@ -16,11 +16,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -35,6 +38,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,19 +67,28 @@ import org.d3if3102.hitungparkir.navigation.Screen
 import org.d3if3102.hitungparkir.ui.theme.HitungParkirTheme
 import org.d3if3102.hitungparkir.util.ViewModelFactory
 
+const val KEY_ID_LOGKENDARAAN = "idLogKendaraan"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(modifier: Modifier, navController: NavHostController) {
+fun ListUpdateScreen(
+    modifier: Modifier,
+    navController: NavHostController,
+    id: Long? = null
+) {
+    var kendaraan by rememberSaveable { mutableStateOf("- Pilih Kendaraan -") }
+    var lamaParkir by rememberSaveable { mutableStateOf("") }
+    var platNo by rememberSaveable { mutableStateOf("") }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 navigationIcon = {
                     IconButton(
-                        onClick = { navController.navigate(Screen.List.route) })
+                        onClick = { navController.popBackStack() })
                     {
                         Icon(
-                            imageVector = Icons.Filled.List,
+                            imageVector = Icons.Filled.ArrowBack,
                             contentDescription = stringResource(id = R.string.list_parkir),
                             tint = MaterialTheme.colorScheme.secondary
                         )
@@ -85,11 +98,11 @@ fun MainScreen(modifier: Modifier, navController: NavHostController) {
                     Box(
                         modifier
                             .fillMaxWidth()
-                            .padding(start = 24.dp),
+                            .padding(end = 24.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = stringResource(id = R.string.app_name),
+                            text = stringResource(id = R.string.update_parkir),
                             fontWeight = W800
                         )
 
@@ -102,48 +115,56 @@ fun MainScreen(modifier: Modifier, navController: NavHostController) {
                 colors = TopAppBarDefaults.mediumTopAppBarColors(
                     containerColor = Color(0xFFF2F5F8),
                 ),
-                actions = {
-                    IconButton(onClick = {
-                        navController.navigate(Screen.Info.route)
-                    }) {
-                        Icon(
-                            imageVector = Icons.Outlined.Info,
-                            contentDescription = stringResource(id = R.string.info_app),
-                            tint = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-
-                }
             )
         }
     ) { padding ->
-        ScreenContent(Modifier.padding(padding))
-
+        UpdateContent(
+            modifier = Modifier.padding(padding),
+            navController,
+            onKendaraanChange = { newValue ->
+                kendaraan = newValue
+            },
+            onLamaParkirChange = { newValue ->
+                lamaParkir = newValue
+            },
+            onPlatNoChange = { newValue ->
+                platNo = newValue
+            },
+            id = id
+        )
     }
-
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScreenContent(modifier: Modifier) {
+fun UpdateContent(
+    modifier: Modifier,
+    navController: NavHostController,
+    onKendaraanChange: (String) -> Unit = {},
+    onLamaParkirChange: (String) -> Unit = {},
+    onPlatNoChange: (String) -> Unit = {},
+    id: Long? = null
+) {
     val context = LocalContext.current
     val db = LogKendaraanDb.getInstance(context)
     val factory = ViewModelFactory(db.dao)
     val viewModel: ListScreenViewModel = viewModel(factory = factory)
     var isExpanded by remember { mutableStateOf(false) }
     var kendaraan by rememberSaveable { mutableStateOf("- Pilih Kendaraan -") }
-    var lamaParkir by rememberSaveable {
-        mutableStateOf("")
-    }
-    var lamaParkirInv by rememberSaveable {
+    var lamaParkir by rememberSaveable { mutableStateOf("") }
+    var lamaParkirInv by rememberSaveable { mutableStateOf(false) }
+    var hasil by rememberSaveable { mutableStateOf(0f) }
+    var platNo by rememberSaveable { mutableStateOf("") }
+    var platNoInv by rememberSaveable {
         mutableStateOf(false)
     }
-    var hasil by rememberSaveable {
-        mutableStateOf(0f)
-    }
-    var platNo by remember {
-        mutableStateOf("")
+
+    LaunchedEffect(true) {
+        if (id == null) return@LaunchedEffect
+        val data = viewModel.getLogKendaraan(id) ?: return@LaunchedEffect
+        kendaraan = data.kendaraan
+        lamaParkir = data.lamaParkir
+        platNo = data.platNo
     }
 
     Box(
@@ -151,21 +172,12 @@ fun ScreenContent(modifier: Modifier) {
             .fillMaxSize()
             .background(Color(0xFFE1F0DA))
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.bg_display),
-            contentDescription = "Main Background",
-            contentScale = ContentScale.FillHeight,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 70.dp)
-        )
         Column(
             modifier = modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(2.dp),
             horizontalAlignment = Alignment.CenterHorizontally
-
         ) {
             ExposedDropdownMenuBox(
                 expanded = isExpanded,
@@ -173,12 +185,13 @@ fun ScreenContent(modifier: Modifier) {
                 modifier = Modifier
                     .padding(top = 20.dp)
                     .clip(RoundedCornerShape(12.dp)),
-
-                )
-            {
+            ) {
                 TextField(
                     value = kendaraan,
-                    onValueChange = {},
+                    onValueChange = { newValue ->
+                        kendaraan = newValue
+                        onKendaraanChange(newValue)
+                    },
                     readOnly = true,
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded)
@@ -188,123 +201,78 @@ fun ScreenContent(modifier: Modifier) {
                 )
                 ExposedDropdownMenu(
                     expanded = isExpanded,
-                    onDismissRequest = { isExpanded = false })
-                {
+                    onDismissRequest = { isExpanded = false }
+                ) {
                     DropdownMenuItem(
                         text = { Text(text = "Motor") },
                         onClick = {
                             kendaraan = "Motor"
                             isExpanded = false
-                        })
+                        }
+                    )
                     DropdownMenuItem(
                         text = { Text(text = "Mobil") },
                         onClick = {
                             kendaraan = "Mobil"
                             isExpanded = false
-                        })
-                }
-            }
-            if (kendaraan.isNotEmpty() && kendaraan != "- Pilih Kendaraan -") {
-                OutlinedTextField(
-                    value = lamaParkir,
-                    onValueChange = { lamaParkir = it },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next
-                    ),
-                    trailingIcon = { IconChanger(lamaParkirInv, "Jam") },
-                    supportingText = { ErrorHint(lamaParkirInv) },
-                    label = { Text(text = stringResource(id = R.string.masukkan_jam)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp)
-                )
-                OutlinedTextField(
-                    value = platNo,
-                    onValueChange = { platNo = it },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Next
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp)
-                )
-                Button(
-                    onClick = {
-                        lamaParkirInv = (lamaParkir == "" || lamaParkir == "0")
-                        if (lamaParkirInv) return@Button
-                        hasil = hitungParkir(lamaParkir.toFloat(), kendaraan)
-                        viewModel.insert(kendaraan, lamaParkir, platNo)
-
-                    },
-                    modifier = Modifier.padding(top = 8.dp),
-                    contentPadding = PaddingValues(horizontal = 60.dp, vertical = 10.dp)
-                ) {
-                    Text(text = stringResource(id = R.string.hitung))
-                }
-            }
-            Spacer(modifier = Modifier.padding(bottom = 20.dp))
-            if (hasil != 0f) {
-                Divider(
-                    modifier = Modifier.fillMaxWidth(),
-                    thickness = 2.dp,
-                    color = Color.Red
-                )
-                Divider(
-                    modifier = Modifier.fillMaxWidth(),
-                    thickness = 2.dp,
-                    color = Color.Yellow
-                )
-                Divider(
-                    modifier = Modifier.fillMaxWidth(),
-                    thickness = 2.dp,
-                    color = Color.Green
-                )
-
-                Spacer(modifier = Modifier.padding(bottom = 20.dp))
-                if (kendaraan == "Motor") {
-                    Text(text = stringResource(id = R.string.motor))
-                    Text(
-                        text = stringResource(id = R.string.teks_hasil, hasil),
-                        style = MaterialTheme.typography.displayMedium
-                    )
-                } else if (kendaraan == "Mobil") {
-                    Text(text = stringResource(id = R.string.mobil))
-                    Text(
-                        text = stringResource(id = R.string.teks_hasil, hasil),
-                        style = MaterialTheme.typography.displayMedium
+                        }
                     )
                 }
-                Spacer(modifier = Modifier.padding(bottom = 20.dp))
-
-                Text(
-                    text = stringResource(id = R.string.hati2),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.headlineMedium
-                )
             }
-            Spacer(modifier = Modifier.padding(bottom = 20.dp))
+            OutlinedTextField(
+                value = lamaParkir,
+                onValueChange = { newValue ->
+                    lamaParkir = newValue
+                    onLamaParkirChange(newValue)
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
+                trailingIcon = { IconChanger(lamaParkirInv, "Jam") },
+                supportingText = { ErrorHint(lamaParkirInv) },
+                label = { Text(text = stringResource(id = R.string.masukkan_jam)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            )
+            OutlinedTextField(
+                value = platNo,
+                onValueChange = { newValue ->
+                    platNo = newValue
+                    onPlatNoChange(newValue)
+                },
+                trailingIcon = { IconChanger(platNoInv, " ") },
+                supportingText = { ErrorHint(platNoInv) },
+                label = { Text(text = stringResource(id = R.string.isi_plat)) },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            )
+            Button(
+                onClick = {
+                    lamaParkirInv = (lamaParkir == "" || lamaParkir == "0")
+                    platNoInv = (platNo == "" || platNo == "0")
+                    if (lamaParkirInv) return@Button
+                    hasil = hitungParkir(lamaParkir.toFloat(), kendaraan)
+                    if (id != null) {
+                        viewModel.update(id, kendaraan, lamaParkir, platNo)
+                        navController.popBackStack()
+                    }
+                },
+                modifier = Modifier.padding(top = 8.dp),
+                contentPadding = PaddingValues(horizontal = 60.dp, vertical = 10.dp)
+            ) {
+                Text(text = stringResource(id = R.string.simpan))
+            }
         }
     }
-
 }
 
-@Composable
-fun IconChanger(isError: Boolean, unit: String) {
-    if (isError) {
-        Icon(imageVector = Icons.Filled.Warning, contentDescription = null)
-    } else {
-        Text(text = unit)
-    }
-}
-
-@Composable
-fun ErrorHint(isError: Boolean) {
-    if (isError) {
-        Text(text = stringResource(id = R.string.input_invalid))
-    }
-}
 
 private fun hitungParkir(lamaParkir: Float, kendaraan: String): Float {
     return when (kendaraan) {
@@ -315,12 +283,14 @@ private fun hitungParkir(lamaParkir: Float, kendaraan: String): Float {
 
 }
 
-
 @Preview(showBackground = true)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
-fun MainScreenPreview() {
+fun ListUpdateScreenPreview() {
     HitungParkirTheme {
-        MainScreen(modifier = Modifier.fillMaxWidth(), navController = rememberNavController())
+        ListUpdateScreen(
+            modifier = Modifier.fillMaxWidth(),
+            navController = rememberNavController()
+        )
     }
 }

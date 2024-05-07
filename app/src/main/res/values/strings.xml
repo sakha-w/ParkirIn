@@ -13,4 +13,13 @@
     <string name="hati2">Hati-hati dalam berkendara.</string>
     <string name="intent_mail">share mail</string>
     <string name="kritik_saran">Kritik/Saran</string>
+    <string name="list_parkir">List Parkir</string>
+    <string name="list_kosong">Data Kosong</string>
+    <string name="list_jam">%1\$s Jam</string>
+    <string name="update_parkir">Update Parkir</string>
+    <string name="simpan">Simpan</string>
+    <string name="isi_plat">Plat Nomor</string>
+    <string name="lainnya">Lainnya</string>
+    <string name="hapus">Hapus</string>
+    <string name="main">MainScreen</string>
 </resources>
