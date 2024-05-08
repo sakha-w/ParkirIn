@@ -1,6 +1,7 @@
 package org.d3if3102.hitungparkir.ui.screen
 
 import android.content.res.Configuration
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -145,6 +146,9 @@ fun ScreenContent(modifier: Modifier) {
     var platNo by remember {
         mutableStateOf("")
     }
+    var platNoInv by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     Box(
         modifier = Modifier
@@ -222,6 +226,9 @@ fun ScreenContent(modifier: Modifier) {
                 OutlinedTextField(
                     value = platNo,
                     onValueChange = { platNo = it },
+                    trailingIcon = { IconChanger(platNoInv, " ") },
+                    supportingText = { ErrorHint(platNoInv) },
+                    label = { Text(text = stringResource(id = R.string.isi_plat)) },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Next
@@ -233,7 +240,15 @@ fun ScreenContent(modifier: Modifier) {
                 Button(
                     onClick = {
                         lamaParkirInv = (lamaParkir == "" || lamaParkir == "0")
-                        if (lamaParkirInv) return@Button
+                        platNoInv = (platNo == "" || platNo == "0")
+                        if (lamaParkirInv || platNoInv) {
+                            Toast.makeText(
+                                context,
+                                "Lama Parkir dan Plat Nomor harus di isi!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
                         hasil = hitungParkir(lamaParkir.toFloat(), kendaraan)
                         viewModel.insert(kendaraan, lamaParkir, platNo)
 
@@ -273,7 +288,7 @@ fun ScreenContent(modifier: Modifier) {
                     Text(text = stringResource(id = R.string.mobil))
                     Text(
                         text = stringResource(id = R.string.teks_hasil, hasil),
-                        style = MaterialTheme.typography.displayMedium
+                        style = MaterialTheme.typography.displaySmall
                     )
                 }
                 Spacer(modifier = Modifier.padding(bottom = 20.dp))
@@ -314,7 +329,6 @@ private fun hitungParkir(lamaParkir: Float, kendaraan: String): Float {
     }
 
 }
-
 
 @Preview(showBackground = true)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)

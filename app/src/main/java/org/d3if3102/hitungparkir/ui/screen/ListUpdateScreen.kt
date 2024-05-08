@@ -1,13 +1,12 @@
 package org.d3if3102.hitungparkir.ui.screen
 
 import android.content.res.Configuration
-import androidx.compose.foundation.Image
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,12 +16,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -48,14 +43,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight.Companion.W800
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -76,9 +68,14 @@ fun ListUpdateScreen(
     navController: NavHostController,
     id: Long? = null
 ) {
+    val context = LocalContext.current
+    val db = LogKendaraanDb.getInstance(context)
+    val factory = ViewModelFactory(db.dao)
+    val viewModel: ListScreenViewModel = viewModel(factory = factory)
     var kendaraan by rememberSaveable { mutableStateOf("- Pilih Kendaraan -") }
     var lamaParkir by rememberSaveable { mutableStateOf("") }
     var platNo by rememberSaveable { mutableStateOf("") }
+    var showDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -115,6 +112,22 @@ fun ListUpdateScreen(
                 colors = TopAppBarDefaults.mediumTopAppBarColors(
                     containerColor = Color(0xFFF2F5F8),
                 ),
+                actions = {
+                    DeleteAction(
+                        delete = {
+                            showDialog = true
+                        },
+                        navController = navController
+                    )
+                    DisplayDeleteDialog(
+                        openDialog = showDialog,
+                        onDissmissRequest = { showDialog = false }
+                        ) {
+                        showDialog = true
+                        viewModel.delete(id!!)
+                        navController.popBackStack()
+                    }
+                }
             )
         }
     ) { padding ->
@@ -255,11 +268,18 @@ fun UpdateContent(
             )
             Button(
                 onClick = {
-                    lamaParkirInv = (lamaParkir == "" || lamaParkir == "0")
-                    platNoInv = (platNo == "" || platNo == "0")
-                    if (lamaParkirInv) return@Button
-                    hasil = hitungParkir(lamaParkir.toFloat(), kendaraan)
                     if (id != null) {
+                        lamaParkirInv = (lamaParkir == "" || lamaParkir == "0")
+                        platNoInv = (platNo == "" || platNo == "0")
+                        if (lamaParkirInv || platNoInv) {
+                            Toast.makeText(
+                                context,
+                                "Lama Parkir dan Plat Nomor harus di isi!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
+                        hasil = hitungParkir(lamaParkir.toFloat(), kendaraan)
                         viewModel.update(id, kendaraan, lamaParkir, platNo)
                         navController.popBackStack()
                     }
@@ -271,6 +291,36 @@ fun UpdateContent(
             }
         }
     }
+}
+
+@Composable
+fun DeleteAction(delete: () -> Unit, navController: NavHostController) {
+    var expanded by remember {
+        mutableStateOf(false)
+    }
+    IconButton(onClick = { expanded = true }) {
+        Icon(
+            imageVector = Icons.Filled.MoreVert,
+            contentDescription = stringResource(id = R.string.lainnya),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.main)) },
+                onClick = { navController.navigate(Screen.Home.route) })
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.hapus)) },
+                onClick = {
+                    expanded = false
+                    delete()
+                }
+            )
+        }
+    }
+
 }
 
 

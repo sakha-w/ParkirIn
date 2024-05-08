@@ -23,8 +23,8 @@ class ListScreenViewModel(private val dao: LogKendaraanDao) : ViewModel() {
             lamaParkir = lamaParkir,
             platNo = platNo
         )
-        viewModelScope.launch(Dispatchers.IO){
-        dao.insert(logKendaraan)
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.insert(logKendaraan)
         }
     }
 
@@ -39,23 +39,15 @@ class ListScreenViewModel(private val dao: LogKendaraanDao) : ViewModel() {
             lamaParkir = lamaParkir,
             platNo = platNo
         )
-        viewModelScope.launch(Dispatchers.IO){
-        dao.update(logKendaraan)
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.update(logKendaraan)
         }
     }
 
-    private fun getParkir(): List<LogKendaraan> {
-        val data = mutableListOf<LogKendaraan>()
-        for (i in 29 downTo 20) {
-            data.add(
-                LogKendaraan(
-                    i.toLong(),
-                    "asdas",
-                    "asda",
-                    "adsasd"
-                )
-            )
+    fun delete(id: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.deleteById(id)
         }
-        return data
     }
+
 }
