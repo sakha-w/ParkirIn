@@ -1,0 +1,23 @@
+[
+    {
+        "kendaraan" : "Motor Beat", "merk" : "Honda", "imageId" : "beat"
+    },
+    {
+        "kendaraan" : "Mobil Cherokee", "merk" : "Jeep", "imageId" : "cherokee"
+    },
+    {
+        "kendaraan" : "Mobil Crv", "merk" : "Honda", "imageId" : "crv"
+    },
+    {
+        "kendaraan" : "Mobil Fortuner", "merk" : "Toyota", "imageId" : "fortuner"
+    },
+    {
+        "kendaraan" : "Mobil Rx-7", "merk" : "Mazda", "imageId" : "rx7"
+    },
+    {
+        "kendaraan" : "Motor Win100", "merk" : "Honda", "imageId" : "win100"
+    },
+    {
+        "kendaraan" : "Mobil Yaris", "merk" : "Toyota", "imageId" : "yaris"
+    }
+]
